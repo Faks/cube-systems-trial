@@ -168,9 +168,6 @@
                 
                 axios.post('/register/validates', dataform).then(response => {
                     this.errors = response.data.errors;
-                    if (this.errors.length === 0) {
-                        this.success = false;
-                    }
                 }).catch((error) => {
                     // this.errors = error.response.data.errors;
                     this.success = false;
