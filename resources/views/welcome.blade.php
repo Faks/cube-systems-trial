@@ -64,9 +64,16 @@
         </style>
     </head>
     <body>
-        <div class="flex-center position-ref full-height">
+    <div class="flex-center position-ref full-height">
             @if (Route::has('login'))
                 <div class="top-right links">
+                    <a class="nav-link"
+                       href="https://bitbucket.org/Faks/cube-systems-trial/src/master/">{{ __('Bitbucket') }}</a>
+
+                    <a class="nav-link"
+                       href="https://www.linkedin.com/in/oskars-germovs-a94b3318a/">{{ __('LinkedIn') }}
+
+
                     @auth
                         <a href="{{ url('/home') }}">Home</a>
                     @else

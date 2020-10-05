@@ -19,7 +19,9 @@ use App\RSSFeed;
 use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Stevebauman\Purify\Facades\Purify;
+
 use function array_values;
+use function back;
 use function compact;
 use function file_get_contents;
 use function redirect;
@@ -37,7 +39,7 @@ class RSSArticlesController extends Controller
     {
         $this->middleware(['auth', 'verified']);
     }
-    
+
     /**
      * Show the application dashboard.
      *
@@ -46,10 +48,10 @@ class RSSArticlesController extends Controller
     public function index()
     {
         $rssFeeds = RSSFeed::query()->orderBy('published_at', 'desc')->paginate();
-        
+
         return view('home', compact('rssFeeds'));
     }
-    
+
     /**
      * Collecting RSS Feed
      * Parsing RSS Feed
@@ -60,7 +62,7 @@ class RSSArticlesController extends Controller
     public function collect() : array
     {
         $simpleXml = simplexml_load_string(file_get_contents('http://www.tvnet.lv/rss/'));
-        
+
         $rssArticles = [];
         foreach ($simpleXml->channel->xpath('item') as $item) {
             $rssArticles[] = [
@@ -72,10 +74,10 @@ class RSSArticlesController extends Controller
                 'published_at' => Purify::clean(Carbon::parse((string)$item->pubDate)->format('Y-m-d H:i:s')),
             ];
         }
-        
+
         return $rssArticles;
     }
-    
+
     /**
      * Storing Articles
      *
@@ -84,27 +86,35 @@ class RSSArticlesController extends Controller
      */
     public function store() : RedirectResponse
     {
-        $this->destroy();
-        
+        $this->purge();
+
         foreach ($this->collect() as $article) {
-            RSSFeed::query()->firstOrCreate([
-                'title'        => $article['title'],
-                'description'  => $article['description'],
-                'author'       => $article['author'],
-                'url'          => $article['url'],
-                'img_url'      => Purify::clean($article['img_data']['url']),
-                'mime_type'    => Purify::clean($article['img_data']['type']),
-                'published_at' => $article['published_at'],
+            RSSFeed::query()->firstOrCreate(
+                [
+                    'title' => $article['title'],
+                    'description' => $article['description'],
+                    'author' => $article['author'],
+                    'url' => $article['url'],
+                    'img_url' => Purify::clean($article['img_data']['url']),
+                    'mime_type' => Purify::clean($article['img_data']['type']),
+                    'published_at' => $article['published_at'],
             ]);
         }
-        
+
         return redirect()->back();
     }
-    
+
     /**
-     * @throws \Exception
+     * @return RedirectResponse
      */
-    public function destroy() : void
+    public function destroy(): RedirectResponse
+    {
+        $this->purge();
+
+        return back();
+    }
+
+    private function purge()
     {
         foreach (RSSFeed::all() as $article) {
             $article->delete();
